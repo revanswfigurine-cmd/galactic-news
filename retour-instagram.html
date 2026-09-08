@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Autorisation Instagram</title>
+<style>
+body{margin:0;padding:2.5rem 1.25rem;background:#0f1115;color:#e6e8ee;
+ font:16px/1.65 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+main{max-width:44rem;margin:0 auto}
+h1{font-size:1.4rem;margin:0 0 1rem}
+pre{background:#1b1f27;padding:1rem;border-radius:8px;overflow-x:auto;
+ word-break:break-all;white-space:pre-wrap;font-size:15px}
+.gris{color:#9aa0ad}.ko{color:#ff8a80}
+button{margin-top:.5rem;padding:.6rem 1rem;border:0;border-radius:8px;
+ background:#f5c518;color:#111;font-weight:700;cursor:pointer}
+</style>
+</head>
+<body>
+<main>
+  <h1>Autorisation Instagram</h1>
+  <div id="sortie"><p class="gris">Lecture de l’adresse…</p></div>
+</main>
+
+<script>
+/*
+ * Cette page AFFICHE le code, elle ne l'échange pas.
+ *
+ * L'échange contre un jeton demande le secret de l'application, et un secret
+ * posé dans une page publique n'est plus un secret — n'importe qui pourrait
+ * publier sur le compte. Le code, lui, ne vaut rien seul et expire en quelques
+ * minutes : on le recopie dans l'application, qui vit sur le réseau privé.
+ */
+(function () {
+  var p = new URLSearchParams(location.search);
+  var erreur = p.get('error_description') || p.get('error');
+  var code = p.get('code') || '';
+
+  /* Instagram suffixe parfois le code de « #_ ». Le fragment n'arrive jamais
+     au serveur, mais il est là dans le navigateur : on le retire, sinon on
+     recopie un code que Meta refuse ensuite. */
+  code = code.replace(/#_$/, '');
+  if (!code && location.hash) {
+    var h = new URLSearchParams(location.hash.replace(/^#/, ''));
+    code = (h.get('code') || '').replace(/#_$/, '');
+  }
+
+  var sortie = document.getElementById('sortie');
+
+  if (erreur) {
+    sortie.innerHTML = '<p class="ko">Meta a refusé : ' + echapper(erreur) + '</p>';
+    return;
+  }
+  if (!code) {
+    sortie.innerHTML = '<p class="ko">Aucun code dans l’adresse.</p>';
+    return;
+  }
+
+  sortie.innerHTML =
+    '<p>Copie ce code dans l’application :</p>' +
+    '<pre id="code">' + echapper(code) + '</pre>' +
+    '<button id="copier">Copier</button>' +
+    '<p class="gris">Il n’est valable que quelques minutes.</p>';
+
+  document.getElementById('copier').addEventListener('click', function () {
+    navigator.clipboard.writeText(code).then(function () {
+      document.getElementById('copier').textContent = 'Copié';
+    });
+  });
+
+  function echapper(t) {
+    return String(t).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+})();
+</script>
+</body>
+</html>
